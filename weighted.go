@@ -22,6 +22,16 @@ type WRR[T any] struct {
 	mtx   sync.RWMutex
 }
 
+// Next returns the next item from the weighted round robin randomizer.
+// It iterates over the items, checks if the current item's occurrences modulo cycle length is less than its weight,
+// if true, it increments the occurrences of the current item, sets the result to the current item, increments the cycle counter,
+// and breaks the loop. If the cycle counter is greater than or equal to the cycle length, it resets the cycle counter and
+// occurrences of all items to 0.
+//
+// The function is thread-safe and uses a read lock on the internal mutex to ensure that the items slice is not modified
+// concurrently.
+//
+// The function returns the next item from the weighted round robin randomizer.
 func (w *WRR[T]) Next() T {
 	var res T
 	w.mtx.RLock()
@@ -43,6 +53,17 @@ func (w *WRR[T]) Next() T {
 	return res
 }
 
+// Add adds a new item with its weight to the weighted round robin randomizer.
+// It increments the cycle length by the given weight, acquires a write lock on the internal mutex,
+// appends the new item to the items slice, sorts the items slice in descending order of weight,
+// and releases the lock.
+//
+// Parameters:
+// - item: The item to be added to the randomizer.
+// - weight: The weight of the item. The higher the weight, the more likely the item will be selected.
+//
+// Return:
+// This function does not return any value.
 func (w *WRR[T]) Add(item T, weight int) {
 	w.cl.Store(w.cl.Add(int32(weight)))
 	w.mtx.Lock()
