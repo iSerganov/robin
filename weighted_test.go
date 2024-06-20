@@ -27,6 +27,17 @@ func TestNext(t *testing.T) {
 			expected: []string{"A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "B", "C", "C", "D",
 				"A", "A", "A", "A", "A", "A", "A", "A", "B", "B"},
 		},
+		{
+			name: "3 items 15 iterations total weight 12",
+			items: []WItem[string]{
+				{item: "NICE", weight: 6},
+				{item: "AWESOME", weight: 5},
+				{item: "THRILLING", weight: 1},
+			},
+			load: 12,
+			expected: []string{"NICE", "NICE", "NICE", "NICE", "NICE", "NICE", "AWESOME",
+				"AWESOME", "AWESOME", "AWESOME", "AWESOME", "THRILLING", "NICE", "NICE", "NICE"},
+		},
 	}
 
 	for _, tt := range tests {
