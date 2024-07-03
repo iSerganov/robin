@@ -7,8 +7,9 @@ See details in [Wikipedia](https://en.wikipedia.org/wiki/Weighted_round_robin).
 
 ### Classical WRR
 In classical WRR the scheduler cycles over the queues.
-When a queue q i {\displaystyle q_{i}} is selected, the scheduler will send packets, up to the emission of w i {\displaystyle w_{i}} packet or the end of queue.
+When a queue q-i is selected, the scheduler will send packets, up to the emission of w-i packet or the end of queue.
 
+```pseudo
 Constant and variables: 
     const N             // Nb of queues 
     const weight[1..N]  // weight of each queue
@@ -24,7 +25,7 @@ while true do
             send(queue[i].head())
             queue[i].dequeue()
             c:= c+1
-
+```
 
 ```golang
 package main
