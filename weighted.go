@@ -16,10 +16,10 @@ type WItem[T any] struct {
 
 // WRR - weighted round robin randomizer
 type WRR[T any] struct {
-	cl    atomic.Int32
-	cr    atomic.Int32
-	items []WItem[T]
-	mtx   sync.RWMutex
+	cycleWeight atomic.Int32
+	cr          atomic.Int32
+	items       []WItem[T]
+	mtx         sync.RWMutex
 }
 
 // Next returns the next item from the weighted round robin randomizer.
@@ -35,20 +35,22 @@ type WRR[T any] struct {
 func (w *WRR[T]) Next() T {
 	var res T
 	w.mtx.RLock()
-	defer w.mtx.RUnlock()
 	for i, v := range w.items {
-		if v.occurrences%int(w.cl.Load()) < v.weight {
+		if v.occurrences%int(w.cycleWeight.Load()) < v.weight {
 			w.items[i].occurrences++
 			res = v.item
-			w.cr.Store(w.cr.Add(1))
+			_ = w.cr.Add(1)
 			break
 		}
 	}
-	if w.cr.Load() >= w.cl.Load() {
+	w.mtx.RUnlock()
+	if w.cr.Load() >= w.cycleWeight.Load() {
 		w.cr.Store(0)
+		w.mtx.RLock()
 		for i := range w.items {
 			w.items[i].occurrences = 0
 		}
+		w.mtx.RUnlock()
 	}
 	return res
 }
@@ -65,7 +67,7 @@ func (w *WRR[T]) Next() T {
 // Return:
 // This function does not return any value.
 func (w *WRR[T]) Add(item T, weight int) {
-	w.cl.Store(w.cl.Add(int32(weight)))
+	_ = w.cycleWeight.Add(int32(weight))
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
 	w.items = append(w.items, WItem[T]{item: item, weight: weight})
@@ -76,7 +78,7 @@ func (w *WRR[T]) Add(item T, weight int) {
 // It clears all items, resets the cycle length to 0, and releases the lock on the internal mutex.
 // This function is safe for concurrent use.
 func (w *WRR[T]) Reset() {
-	w.cl.Store(0)
+	w.cycleWeight.Store(0)
 	w.cr.Store(0)
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
