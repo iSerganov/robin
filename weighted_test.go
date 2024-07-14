@@ -28,15 +28,19 @@ func TestNext(t *testing.T) {
 				"A", "A", "A", "A", "A", "A", "A", "A", "B", "B"},
 		},
 		{
-			name: "3 items 15 iterations total weight 12",
+			name: "3 items 28 iterations total weight 12",
 			items: []WItem[string]{
 				{item: "NICE", weight: 6},
 				{item: "AWESOME", weight: 5},
 				{item: "THRILLING", weight: 1},
 			},
 			load: 12,
-			expected: []string{"NICE", "NICE", "NICE", "NICE", "NICE", "NICE", "AWESOME",
-				"AWESOME", "AWESOME", "AWESOME", "AWESOME", "THRILLING", "NICE", "NICE", "NICE"},
+			expected: []string{
+				"NICE", "NICE", "NICE", "NICE", "NICE", "NICE", "AWESOME",
+				"AWESOME", "AWESOME", "AWESOME", "AWESOME", "THRILLING",
+				"NICE", "NICE", "NICE", "NICE", "NICE", "NICE", "AWESOME",
+				"AWESOME", "AWESOME", "AWESOME", "AWESOME", "THRILLING",
+				"NICE", "NICE", "NICE", "NICE"},
 		},
 	}
 
@@ -45,7 +49,7 @@ func TestNext(t *testing.T) {
 			wrr := &WRR[string]{
 				items: tt.items,
 			}
-			wrr.cl.Store(tt.load)
+			wrr.cycleWeight.Store(tt.load)
 			for i, e := range tt.expected {
 				asrt.Equal(e, wrr.Next(), "The two words should be the same. Iteration %d", i)
 			}
@@ -132,7 +136,7 @@ func TestReset(t *testing.T) {
 					{item: "C", weight: 1},
 				},
 			}
-			wrr.cl.Store(6)
+			wrr.cycleWeight.Store(6)
 
 			// Perform some operations before resetting
 			wrr.Next()
@@ -147,8 +151,7 @@ func TestReset(t *testing.T) {
 			assert.NotPanics(t, func() { wrr.Reset() })
 
 			// Verify that the WRR is reset correctly
-			assert.Equal(t, 0, int(wrr.cl.Load()))
-			assert.Equal(t, 0, int(wrr.cr.Load()))
+			assert.Equal(t, 0, int(wrr.cycleWeight.Load()))
 			assert.Empty(t, wrr.items)
 		})
 	}
